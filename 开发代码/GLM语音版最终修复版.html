@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>沃橙信息智能前台 - GLM语音版（最终修复版）</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background-color: #000000;
+            color: #FFFFFF;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* 狗头形象 */
+        .dog-avatar {
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background-color: #2196F3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 40px;
+            box-shadow: 0 0 10px rgba(33, 150, 243, 0.5);
+            transition: box-shadow 0.3s ease;
+        }
+
+        .dog-avatar.speaking {
+            box-shadow: 0 0 30px rgba(33, 150, 243, 0.8);
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .dog-face {
+            width: 200px;
+            height: 200px;
+            background-color: #FFFFFF;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 120px;
+        }
+
+        /* 模型标识 */
+        .model-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 5px 10px;
+            background-color: #FF6B35;
+            color: #FFFFFF;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        /* 对话显示 */
+        .chat-container {
+            flex: 1;
+            width: 100%;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            padding: 10px;
+        }
+
+        .message {
+            display: flex;
+            margin-bottom: 20px;
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message.assistant {
+            justify-content: flex-start;
+        }
+
+        .bubble {
+            max-width: 70%;
+            padding: 15px 20px;
+            border-radius: 20px;
+            word-wrap: break-word;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            line-height: 1.5;
+        }
+
+        .message.user .bubble {
+            background-color: #2196F3;
+            color: #FFFFFF;
+        }
+
+        .message.assistant .bubble {
+            background-color: #333333;
+            color: #FFFFFF;
+        }
+
+        /* 录音按钮 */
+        .recorder-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .record-button {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: none;
+            background-color: #4CAF50;
+            color: #FFFFFF;
+            font-size: 48px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .record-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .record-button:disabled {
+            background-color: #666666;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .record-button.recording {
+            background-color: #FF6B35;
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        .record-button.processing {
+            background-color: #666666;
+            cursor: not-allowed;
+        }
+
+        .status {
+            font-size: 14px;
+            color: #AAAAAA;
+            text-align: center;
+            min-height: 20px;
+        }
+
+        /* 权限提示 */
+        .permission-tip {
+            background-color: #FFA000;
+            color: #FFFFFF;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            font-size: 14px;
+            display: none;
+            text-align: center;
+            max-width: 600px;
+        }
+
+        .permission-tip.show {
+            display: block;
+        }
+
+        /* 调试信息 */
+        .debug-panel {
+            width: 100%;
+            max-width: 600px;
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 5px;
+            font-size: 11px;
+            color: #AAA;
+            display: none;
+        }
+
+        .debug-panel.show {
+            display: block;
+        }
+
+        .debug-panel pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        /* 文本输入备用 */
+        .input-container {
+            width: 100%;
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .input-field {
+            flex: 1;
+            padding: 15px 20px;
+            border-radius: 25px;
+            border: 2px solid #333333;
+            background-color: #1a1a1a;
+            color: #FFFFFF;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-field:focus {
+            border-color: #2196F3;
+        }
+
+        .input-field:disabled {
+            background-color: #333333;
+            cursor: not-allowed;
+        }
+
+        .send-button {
+            padding: 15px 30px;
+            border-radius: 25px;
+            border: none;
+            background-color: #2196F3;
+            color: #FFFFFF;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .send-button:hover {
+            background-color: #1976D2;
+        }
+
+        .send-button:disabled {
+            background-color: #666666;
+            cursor: not-allowed;
+        }
+
+        /* 输入模式切换 */
+        .mode-switch {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .mode-button {
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 1px solid #333333;
+            background-color: transparent;
+            color: #AAAAAA;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .mode-button:hover {
+            background-color: #333333;
+            color: #FFFFFF;
+        }
+
+        .mode-button.active {
+            background-color: #2196F3;
+            border-color: #2196F3;
+            color: #FFFFFF;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" style="position: relative;">
+        <!-- 模型标识 -->
+        <div class="model-badge">🤖 GLM-4 语音版（最终修复版）</div>
+
+        <!-- 狗头形象 -->
+        <div class="dog-avatar" id="dogAvatar">
+            <div class="dog-face">🐶</div>
+        </div>
+
+        <!-- 调试信息 -->
+        <div class="debug-panel" id="debugPanel">
+            <pre id="debugContent">等待操作...</pre>
+        </div>
+
+        <!-- 权限提示 -->
+        <div class="permission-tip" id="permissionTip">
+            🔊 请允许浏览器访问麦克风，然后点击"开始录音"
+        </div>
+
+        <!-- 对话显示 -->
+        <div class="chat-container" id="chatContainer">
+            <div class="message assistant">
+                <div class="bubble">你好！我是沃橙信息的智能前台，有什么可以帮你的吗？</div>
+            </div>
+        </div>
+
+        <!-- 录音按钮 -->
+        <div class="recorder-container">
+            <button class="record-button" id="recordButton">🎙️</button>
+            <div class="status" id="statusText">点击开始录音</div>
+        </div>
+
+        <!-- 输入模式切换 -->
+        <div class="mode-switch">
+            <button class="mode-button active" id="voiceMode" onclick="switchMode('voice')">🎙️ 语音模式</button>
+            <button class="mode-button" id="textMode" onclick="switchMode('text')">⌨️ 文本模式</button>
+            <button class="mode-button" id="debugMode" onclick="toggleDebug()">🔍 调试</button>
+        </div>
+
+        <!-- 文本输入（默认隐藏） -->
+        <div class="input-container" id="inputContainer" style="display: none;">
+            <input
+                type="text"
+                class="input-field"
+                id="inputField"
+                placeholder="输入你的问题..."
+                onkeypress="handleKeyPress(event)"
+            />
+            <button class="send-button" id="sendButton" onclick="sendTextMessage()">发送</button>
+        </div>
+    </div>
+
+    <script>
+        // GLM-4 API 配置
+        const GLM_API_KEY = '95b7eff60dcb4417a10431c739f3f047.lwp9FUqITmKrp0dh';
+        const GLM_API_URL = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
+
+        // DOM 元素
+        const dogAvatar = document.getElementById('dogAvatar');
+        const chatContainer = document.getElementById('chatContainer');
+        const recordButton = document.getElementById('recordButton');
+        const statusText = document.getElementById('statusText');
+        const permissionTip = document.getElementById('permissionTip');
+        const debugPanel = document.getElementById('debugPanel');
+        const debugContent = document.getElementById('debugContent');
+        const inputContainer = document.getElementById('inputContainer');
+        const inputField = document.getElementById('inputField');
+        const sendButton = document.getElementById('sendButton');
+        const voiceMode = document.getElementById('voiceMode');
+        const textMode = document.getElementById('textMode');
+        const debugMode = document.getElementById('debugMode');
+
+        // 状态
+        let isRecording = false;
+        let isProcessing = false;
+        let permissionGranted = false;
+        let recognition = null;
+        let recordingStartTime = 0;
+        let messages = [
+            { role: 'assistant', content: '你好！我是沃橙信息的智能前台，有什么可以帮你的吗？' }
+        ];
+
+        // 调试日志
+        function logDebug(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logMessage = `[${timestamp}] ${message}\n`;
+            debugContent.textContent = logMessage + debugContent.textContent;
+            console.log(message);
+        }
+
+        // 初始化语音识别
+        function initSpeechRecognition() {
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+                recognition.lang = 'zh-CN';
+                recognition.continuous = false;
+                recognition.interimResults = false;
+
+                recognition.onstart = () => {
+                    recordingStartTime = Date.now();
+                    logDebug(`录音开始 (${recordingStartTime})`);
+                    isRecording = true;
+                    recordButton.classList.add('recording');
+                    recordButton.textContent = '⏹';
+                    statusText.textContent = '录音中...（请说话）';
+                    dogAvatar.classList.add('speaking');
+                };
+
+                recognition.onresult = (event) => {
+                    const recordingDuration = Date.now() - recordingStartTime;
+                    const text = event.results[0][0].transcript;
+                    logDebug(`识别到文本: "${text}" (录音时长: ${recordingDuration}ms)`);
+                    stopRecording();
+                    processMessage(text);
+                };
+
+                recognition.onerror = (event) => {
+                    const recordingDuration = Date.now() - recordingStartTime;
+                    logDebug(`语音识别错误: ${event.error} (录音时长: ${recordingDuration}ms)`);
+
+                    if (event.error === 'not-allowed') {
+                        permissionGranted = false;
+                        permissionTip.textContent = '❌ 麦克风权限被拒绝，请在浏览器设置中允许访问';
+                        permissionTip.classList.add('show');
+                    }
+
+                    if (event.error === 'aborted') {
+                        logDebug('录音被用户取消');
+                        return;
+                    }
+
+                    if (event.error === 'no-speech') {
+                        logDebug('未检测到语音，正在重新录音...');
+                        // 未检测到语音，自动重新开始录音
+                        setTimeout(() => {
+                            if (isRecording && !isProcessing) {
+                                try {
+                                    recognition.start();
+                                } catch (e) {
+                                    logDebug(`重新录音失败: ${e.message}`);
+                                    isRecording = false;
+                                    recordButton.classList.remove('recording');
+                                    recordButton.textContent = '🎙️';
+                                }
+                            }
+                        }, 500);
+                        return;
+                    }
+
+                    stopRecording();
+                };
+
+                recognition.onend = () => {
+                    const recordingDuration = Date.now() - recordingStartTime;
+                    logDebug(`录音结束 (录音时长: ${recordingDuration}ms)`);
+
+                    // 如果录音时间太短（小于2秒），可能是异常停止
+                    if (recordingDuration < 2000 && isRecording && !isProcessing) {
+                        logDebug('录音时间太短，可能是异常停止，重新启动...');
+                        setTimeout(() => {
+                            if (isRecording) {
+                                try {
+                                    recognition.start();
+                                } catch (e) {
+                                    logDebug(`重启录音失败: ${e.message}`);
+                                    isRecording = false;
+                                    recordButton.classList.remove('recording');
+                                    recordButton.textContent = '🎙️';
+                                }
+                            }
+                        }, 500);
+                    }
+                };
+
+                logDebug('语音识别初始化成功');
+            } else {
+                logDebug('浏览器不支持语音识别');
+                statusText.textContent = '浏览器不支持语音识别，请使用 Chrome 或 Edge';
+                recordButton.disabled = true;
+            }
+        }
+
+        // 语音合成
+        let synthesis = null;
+        if ('speechSynthesis' in window) {
+            synthesis = window.speechSynthesis;
+            window.speechSynthesis.getVoices();
+        } else {
+            logDebug('浏览器不支持语音合成');
+        }
+
+        // 录音按钮点击
+        recordButton.addEventListener('click', async () => {
+            if (isProcessing) {
+                logDebug('正在处理中，无法开始录音');
+                return;
+            }
+
+            if (isRecording) {
+                logDebug('用户手动停止录音');
+                stopRecording();
+            } else {
+                logDebug('用户点击开始录音');
+
+                // 如果没有权限，先请求权限
+                if (!permissionGranted) {
+                    logDebug('权限未授予，请求权限...');
+                    await requestPermission();
+                }
+
+                // 权限授予后，等待一下，确保 Web Speech API 完全就绪
+                if (permissionGranted) {
+                    logDebug('权限已授予，等待 500ms 后启动录音...');
+                    setTimeout(() => {
+                        if (!isRecording && !isProcessing) {
+                            startRecording();
+                        }
+                    }, 500);
+                } else {
+                    logDebug('权限未授予，无法开始录音');
+                    permissionTip.textContent = '❌ 麦克风权限被拒绝，请在浏览器设置中允许访问';
+                    permissionTip.classList.add('show');
+                }
+            }
+        });
+
+        // 请求麦克风权限
+        async function requestPermission() {
+            return new Promise((resolve, reject) => {
+                logDebug('请求麦克风权限...');
+
+                navigator.mediaDevices.getUserMedia({ audio: true })
+                    .then(stream => {
+                        logDebug('麦克风权限已授予');
+
+                        // 停止测试流
+                        stream.getTracks().forEach(track => track.stop());
+
+                        permissionGranted = true;
+                        permissionTip.classList.remove('show');
+
+                        resolve(true);
+                    })
+                    .catch(error => {
+                        logDebug(`麦克风权限被拒绝: ${error.name} - ${error.message}`);
+                        permissionGranted = false;
+
+                        if (error.name === 'NotAllowedError') {
+                            permissionTip.textContent = '❌ 麦克风权限被拒绝，请在浏览器设置中允许访问';
+                        } else if (error.name === 'NotFoundError') {
+                            permissionTip.textContent = '❌ 未检测到麦克风设备';
+                        } else {
+                            permissionTip.textContent = '🔊 请允许浏览器访问麦克风';
+                        }
+
+                        permissionTip.classList.add('show');
+                        resolve(false);
+                    });
+            });
+        }
+
+        // 开始录音
+        function startRecording() {
+            if (!recognition) {
+                logDebug('语音识别未初始化');
+                return;
+            }
+
+            try {
+                logDebug('启动语音识别...');
+                recognition.start();
+            } catch (error) {
+                logDebug(`启动录音失败: ${error.message}`);
+
+                // 如果已经启动，先停止再启动
+                try {
+                    recognition.stop();
+                    setTimeout(() => {
+                        recognition.start();
+                    }, 100);
+                } catch (error2) {
+                    logDebug(`重启录音失败: ${error2.message}`);
+                }
+            }
+        }
+
+        // 停止录音
+        function stopRecording() {
+            if (recognition) {
+                try {
+                    recognition.stop();
+                } catch (error) {
+                    logDebug(`停止录音失败: ${error.message}`);
+                }
+            }
+
+            isRecording = false;
+            recordButton.classList.remove('recording');
+            recordButton.textContent = '🎙️';
+            dogAvatar.classList.remove('speaking');
+
+            if (!isProcessing) {
+                statusText.textContent = '点击开始录音';
+            }
+        }
+
+        // 处理消息
+        async function processMessage(text) {
+            isProcessing = true;
+            recordButton.classList.add('processing');
+            statusText.textContent = '处理中...';
+            dogAvatar.classList.add('speaking');
+
+            addMessage('user', text);
+
+            try {
+                logDebug('开始调用 GLM-4 API...');
+                const response = await chatWithGLM(text);
+                logDebug('AI 回复: ' + response.substring(0, 50) + '...');
+
+                addMessage('assistant', response);
+
+                logDebug('开始语音合成...');
+                await speak(response);
+                logDebug('语音合成完成');
+            } catch (error) {
+                logDebug(`处理失败: ${error.message}`);
+                addMessage('assistant', '抱歉，我刚才没听清楚，能再说一遍吗？');
+            } finally {
+                isProcessing = false;
+                recordButton.classList.remove('processing');
+                statusText.textContent = '点击开始录音';
+                dogAvatar.classList.remove('speaking');
+            }
+        }
+
+        // GLM-4 API 调用
+        async function chatWithGLM(text) {
+            const requestBody = {
+                model: 'glm-4',
+                messages: [
+                    {
+                        role: 'system',
+                        content: '你是沃橙信息的智能前台，形象是姜浩的狗头，亲切、专业、有趣。你的任务是回答访客的问题，提供企业信息，展示友好形象。请给出详细、有用的回答，不要简单重复问题。'
+                    },
+                    ...messages,
+                    { role: 'user', content: text }
+                ],
+                max_tokens: 500,
+                temperature: 0.7
+            };
+
+            logDebug('发送请求到 GLM-4 API...');
+
+            const response = await fetch(GLM_API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${GLM_API_KEY}`
+                },
+                body: JSON.stringify(requestBody)
+            });
+
+            logDebug(`API 响应状态: ${response.status}`);
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                logDebug(`API 错误: ${errorText}`);
+                throw new Error(`HTTP ${response.status}: ${errorText}`);
+            }
+
+            const data = await response.json();
+
+            if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+                logDebug('API 返回数据格式不正确');
+                throw new Error('API 返回数据格式不正确');
+            }
+
+            const aiResponse = data.choices[0].message.content;
+
+            if (!aiResponse || aiResponse.trim() === '') {
+                logDebug('API 返回空内容');
+                throw new Error('API 返回空内容');
+            }
+
+            messages.push({ role: 'user', content: text });
+            messages.push({ role: 'assistant', content: aiResponse });
+
+            return aiResponse;
+        }
+
+        // 发送文本消息
+        async function sendTextMessage() {
+            const text = inputField.value.trim();
+            if (!text) return;
+
+            if (isProcessing) return;
+
+            inputField.value = '';
+            await processMessage(text);
+        }
+
+        // 添加消息
+        function addMessage(role, content) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+
+            const bubbleDiv = document.createElement('div');
+            bubbleDiv.className = 'bubble';
+            bubbleDiv.textContent = content;
+
+            messageDiv.appendChild(bubbleDiv);
+            chatContainer.appendChild(messageDiv);
+
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // 语音合成
+        function speak(text) {
+            return new Promise((resolve, reject) => {
+                if (!synthesis) {
+                    resolve();
+                    return;
+                }
+
+                synthesis.cancel();
+
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'zh-CN';
+                utterance.rate = 1.0;
+                utterance.pitch = 1.0;
+                utterance.volume = 1.0;
+
+                const voices = synthesis.getVoices();
+                const chineseVoice = voices.find(voice => voice.lang.includes('zh'));
+                if (chineseVoice) {
+                    utterance.voice = chineseVoice;
+                }
+
+                utterance.onend = () => {
+                    resolve();
+                };
+
+                utterance.onerror = (event) => {
+                    logDebug(`语音合成错误: ${event.error}`);
+                    reject(new Error(`语音合成失败: ${event.error}`));
+                };
+
+                synthesis.speak(utterance);
+            });
+        }
+
+        // 切换输入模式
+        function switchMode(mode) {
+            if (mode === 'voice') {
+                voiceMode.classList.add('active');
+                textMode.classList.remove('active');
+                inputContainer.style.display = 'none';
+            } else {
+                textMode.classList.add('active');
+                voiceMode.classList.remove('active');
+                inputContainer.style.display = 'flex';
+                inputField.focus();
+            }
+        }
+
+        // 切换调试面板
+        function toggleDebug() {
+            debugPanel.classList.toggle('show');
+            debugMode.classList.toggle('active');
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !isProcessing) {
+                sendTextMessage();
+            }
+        }
+
+        window.addEventListener('load', () => {
+            logDebug('沃橙信息智能前台已加载 - GLM-4 语音版（最终修复版）');
+            logDebug('GLM API Key: ' + GLM_API_KEY.substring(0, 20) + '...');
+
+            initSpeechRecognition();
+        });
+    </script>
+</body>
+</html>

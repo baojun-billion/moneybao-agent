@@ -1,0 +1,15 @@
+{
+  "name": "@openclaw/volcano-ark",
+  "version": "1.0.0",
+  "type": "commonjs",
+  "description": "ByteDance Volcano Ark 多媒体生成插件：图片、视频",
+  "main": "index.js",
+  "openclaw": {
+    "extensions": ["./index.js"],
+    "providers": ["volcano-image", "volcano-video"]
+  },
+  "files": [
+    "index.js",
+    "openclaw.plugin.json"
+  ]
+}

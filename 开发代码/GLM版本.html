@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>沃橙信息智能前台 - GLM版本</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background-color: #000000;
+            color: #FFFFFF;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* 狗头形象 */
+        .dog-avatar {
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background-color: #2196F3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 40px;
+            box-shadow: 0 0 10px rgba(33, 150, 243, 0.5);
+            transition: box-shadow 0.3s ease;
+        }
+
+        .dog-avatar.speaking {
+            box-shadow: 0 0 30px rgba(33, 150, 243, 0.8);
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .dog-face {
+            width: 200px;
+            height: 200px;
+            background-color: #FFFFFF;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 120px;
+        }
+
+        /* 模型标识 */
+        .model-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 5px 10px;
+            background-color: #FF6B35;
+            color: #FFFFFF;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        /* 对话显示 */
+        .chat-container {
+            flex: 1;
+            width: 100%;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            padding: 10px;
+        }
+
+        .message {
+            display: flex;
+            margin-bottom: 20px;
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message.assistant {
+            justify-content: flex-start;
+        }
+
+        .bubble {
+            max-width: 70%;
+            padding: 15px 20px;
+            border-radius: 20px;
+            word-wrap: break-word;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            line-height: 1.5;
+        }
+
+        .message.user .bubble {
+            background-color: #2196F3;
+            color: #FFFFFF;
+        }
+
+        .message.assistant .bubble {
+            background-color: #333333;
+            color: #FFFFFF;
+        }
+
+        /* 输入区域 */
+        .input-container {
+            width: 100%;
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-field {
+            flex: 1;
+            padding: 15px 20px;
+            border-radius: 25px;
+            border: 2px solid #333333;
+            background-color: #1a1a1a;
+            color: #FFFFFF;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-field:focus {
+            border-color: #2196F3;
+        }
+
+        .input-field:disabled {
+            background-color: #333333;
+            cursor: not-allowed;
+        }
+
+        .send-button {
+            padding: 15px 30px;
+            border-radius: 25px;
+            border: none;
+            background-color: #4CAF50;
+            color: #FFFFFF;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .send-button:hover {
+            background-color: #45a049;
+        }
+
+        .send-button:disabled {
+            background-color: #666666;
+            cursor: not-allowed;
+        }
+
+        .send-button.sending {
+            background-color: #666666;
+            cursor: not-allowed;
+        }
+
+        /* 状态提示 */
+        .status {
+            font-size: 14px;
+            color: #AAAAAA;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        /* 快捷问题 */
+        .quick-questions {
+            width: 100%;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .quick-question {
+            padding: 10px 20px;
+            border-radius: 20px;
+            border: 1px solid #2196F3;
+            background-color: transparent;
+            color: #2196F3;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .quick-question:hover {
+            background-color: #2196F3;
+            color: #FFFFFF;
+        }
+
+        .quick-question:disabled {
+            border-color: #666666;
+            color: #666666;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" style="position: relative;">
+        <!-- 模型标识 -->
+        <div class="model-badge">🤖 GLM-4</div>
+
+        <!-- 狗头形象 -->
+        <div class="dog-avatar" id="dogAvatar">
+            <div class="dog-face">🐶</div>
+        </div>
+
+        <!-- 对话显示 -->
+        <div class="chat-container" id="chatContainer">
+            <div class="message assistant">
+                <div class="bubble">你好！我是沃橙信息的智能前台，有什么可以帮你的吗？</div>
+            </div>
+        </div>
+
+        <!-- 快捷问题 -->
+        <div class="quick-questions" id="quickQuestions">
+            <button class="quick-question" onclick="askQuestion('你好')">你好</button>
+            <button class="quick-question" onclick="askQuestion('介绍一下沃橙信息')">介绍一下沃橙信息</button>
+            <button class="quick-question" onclick="askQuestion('你们公司做什么的？')">你们公司做什么的？</button>
+            <button class="quick-question" onclick="askQuestion('怎么联系你们？')">怎么联系你们？</button>
+            <button class="quick-question" onclick="askQuestion('你们公司在哪里？')">你们公司在哪里？</button>
+        </div>
+
+        <!-- 输入区域 -->
+        <div class="input-container">
+            <input
+                type="text"
+                class="input-field"
+                id="inputField"
+                placeholder="输入你的问题..."
+                onkeypress="handleKeyPress(event)"
+            />
+            <button class="send-button" id="sendButton" onclick="sendMessage()">发送</button>
+        </div>
+
+        <!-- 状态提示 -->
+        <div class="status" id="statusText">输入问题或点击快捷按钮</div>
+    </div>
+
+    <script>
+        // GLM-4 API 配置
+        const GLM_API_KEY = '95b7eff60dcb4417a10431c739f3f047.lwp9FUqITmKrp0dh';
+        const GLM_API_URL = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
+
+        // DOM 元素
+        const dogAvatar = document.getElementById('dogAvatar');
+        const chatContainer = document.getElementById('chatContainer');
+        const inputField = document.getElementById('inputField');
+        const sendButton = document.getElementById('sendButton');
+        const statusText = document.getElementById('statusText');
+        const quickQuestions = document.getElementById('quickQuestions');
+
+        // 状态
+        let isProcessing = false;
+        let messages = [
+            { role: 'assistant', content: '你好！我是沃橙信息的智能前台，有什么可以帮你的吗？' }
+        ];
+
+        // 语音合成
+        let synthesis = null;
+        if ('speechSynthesis' in window) {
+            synthesis = window.speechSynthesis;
+            window.speechSynthesis.getVoices();
+        }
+
+        // 快捷问题
+        function askQuestion(question) {
+            if (isProcessing) return;
+            inputField.value = question;
+            sendMessage();
+        }
+
+        // 发送消息
+        async function sendMessage() {
+            const text = inputField.value.trim();
+            if (!text) return;
+
+            if (isProcessing) return;
+
+            isProcessing = true;
+            inputField.disabled = true;
+            sendButton.disabled = true;
+            sendButton.textContent = '⏳';
+            statusText.textContent = '处理中...';
+            dogAvatar.classList.add('speaking');
+            disableQuickButtons(true);
+
+            inputField.value = '';
+
+            // 添加用户消息
+            addMessage('user', text);
+
+            try {
+                // AI 对话
+                const response = await chatWithGLM(text);
+                console.log('AI 回复:', response);
+
+                // 添加 AI 消息
+                addMessage('assistant', response);
+
+                // 语音合成
+                await speak(response);
+            } catch (error) {
+                console.error('处理失败:', error);
+                addMessage('assistant', '抱歉，我刚才没听清楚，能再说一遍吗？');
+            } finally {
+                isProcessing = false;
+                inputField.disabled = false;
+                sendButton.disabled = false;
+                sendButton.textContent = '发送';
+                statusText.textContent = '输入问题或点击快捷按钮';
+                dogAvatar.classList.remove('speaking');
+                disableQuickButtons(false);
+                inputField.focus();
+            }
+        }
+
+        // GLM-4 API 调用
+        async function chatWithGLM(text) {
+            const requestBody = {
+                model: 'glm-4',
+                messages: [
+                    {
+                        role: 'system',
+                        content: '你是沃橙信息的智能前台，形象是姜浩的狗头，亲切、专业、有趣。你的任务是回答访客的问题，提供企业信息，展示友好形象。请给出详细、有用的回答，不要简单重复问题。'
+                    },
+                    ...messages,
+                    { role: 'user', content: text }
+                ],
+                max_tokens: 500,
+                temperature: 0.7
+            };
+
+            console.log('GLM API 请求:', requestBody);
+
+            const response = await fetch(GLM_API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${GLM_API_KEY}`
+                },
+                body: JSON.stringify(requestBody)
+            });
+
+            console.log('GLM API 响应状态:', response.status);
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('GLM API 错误:', errorText);
+                throw new Error(`HTTP ${response.status}: ${errorText}`);
+            }
+
+            const data = await response.json();
+            console.log('GLM API 响应数据:', data);
+
+            // 检查返回数据格式
+            if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+                console.error('GLM API 返回数据格式不正确:', data);
+                throw new Error('API 返回数据格式不正确');
+            }
+
+            const aiResponse = data.choices[0].message.content;
+
+            // 检查回复是否为空
+            if (!aiResponse || aiResponse.trim() === '') {
+                console.error('GLM API 返回空内容');
+                throw new Error('API 返回空内容');
+            }
+
+            console.log('提取到的回复:', aiResponse);
+
+            // 更新消息历史
+            messages.push({ role: 'user', content: text });
+            messages.push({ role: 'assistant', content: aiResponse });
+
+            return aiResponse;
+        }
+
+        // 添加消息
+        function addMessage(role, content) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+
+            const bubbleDiv = document.createElement('div');
+            bubbleDiv.className = 'bubble';
+            bubbleDiv.textContent = content;
+
+            messageDiv.appendChild(bubbleDiv);
+            chatContainer.appendChild(messageDiv);
+
+            // 滚动到底部
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // 语音合成
+        function speak(text) {
+            return new Promise((resolve, reject) => {
+                if (!synthesis) {
+                    resolve();
+                    return;
+                }
+
+                // 停止当前正在播放的语音
+                synthesis.cancel();
+
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'zh-CN';
+                utterance.rate = 1.0;
+                utterance.pitch = 1.0;
+                utterance.volume = 1.0;
+
+                // 尝试选择中文语音
+                const voices = synthesis.getVoices();
+                const chineseVoice = voices.find(voice => voice.lang.includes('zh'));
+                if (chineseVoice) {
+                    utterance.voice = chineseVoice;
+                }
+
+                utterance.onend = () => {
+                    resolve();
+                };
+
+                utterance.onerror = (event) => {
+                    console.error('语音合成错误:', event.error);
+                    reject(new Error(`语音合成失败: ${event.error}`));
+                };
+
+                synthesis.speak(utterance);
+            });
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !isProcessing) {
+                sendMessage();
+            }
+        }
+
+        function disableQuickButtons(disabled) {
+            const buttons = quickQuestions.querySelectorAll('.quick-question');
+            buttons.forEach(button => {
+                button.disabled = disabled;
+            });
+        }
+
+        window.addEventListener('load', () => {
+            console.log('沃橙信息智能前台已加载 - GLM-4 模型');
+            console.log('GLM API Key:', GLM_API_KEY.substring(0, 20) + '...');
+            inputField.focus();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+{
+  "id": "volcano-ark",
+  "name": "火山方舟",
+  "description": "ByteDance Volcano Ark 多媒体生成：图片、视频",
+  "version": "1.0.0",
+  "author": "moneybao-agent",
+  "contracts": {
+    "providers": ["volcano-image", "volcano-video"]
+  },
+  "providers": ["volcano-image", "volcano-video"],
+  "providerAuthEnvVars": {
+    "volcano-image": ["VOLCANO_API_KEY"],
+    "volcano-video": ["VOLCANO_API_KEY"]
+  },
+  "activation": {
+    "onStartup": true
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "apiKey": {
+        "type": "string",
+        "description": "火山方舟 API Key",
+        "default": "244e2a61-4b5b-4e2a-b329-eed0a5ade364"
+      }
+    }
+  },
+  "keywords": [
+    "volcano",
+    "ark",
+    "bytedance",
+    "doubao",
+    "image",
+    "video",
+    "seedream",
+    "seedance"
+  ]
+}

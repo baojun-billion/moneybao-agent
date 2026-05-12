@@ -1,0 +1,40 @@
+# OpenClaw Runtime
+.openclaw/
+memory-search.sqlite
+
+# Environment Variables
+.env
+
+# Sensitive Data
+credentials/
+secrets/
+*.key
+*.pem
+
+# Temporary Files
+*.tmp
+*.temp
+*.log
+test_*.json
+test_*.png
+
+# Development Files
+phase*.md
+*_TEST_REPORT.md
+*_COMPLETION-REPORT.md
+*_PLAN.md
+FILE_INDEX.md
+FINAL-*.md
+
+# Other
+*.sqlite
+models.json
+job_description.txt
+resume_extract.txt
+query-video-status.json
+api-test-progress.md
+volcano-*.md
+
+# Sensitive Scripts
+create-repo*.ps1
+create-repo*.sh
