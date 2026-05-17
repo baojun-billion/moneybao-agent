@@ -53,8 +53,11 @@ video-use/
 - 编写创意简报
 
 ### 阶段二：视频生成 🎬
-- 编写高质量 Prompt
-- 调用 video_generate 工具
+- **技术选型**：选择 AI 直接生成或 HyperFrames
+  - AI 直接生成：复杂自然场景、创意验证
+  - HyperFrames：产品演示、数据可视化、品牌动画
+- 编写高质量 Prompt 或描述
+- 调用对应工具生成
 - 保存到项目目录
 - 记录生成参数
 
@@ -154,6 +157,18 @@ video-use/
 - 平台发布指南
 - 协作规范
 - 质量标准
+- **HyperFrames 技术选项**
+
+### HyperFrames 指南
+快速入门指南：`../skills/video-use/HYPERFRAMES-GUIDE.md`
+
+包含：
+- HyperFrames 核心概念
+- 快速上手步骤
+- AI 辅助开发
+- 常用动画库
+- 实用技巧
+- 常见问题
 
 ### Prompt 模板
 - `templates/social-media.md` - 社交媒体模板
@@ -189,6 +204,15 @@ video-use/
 2. 编写 `brief.md` 创意简报
 3. 收集参考素材到 `assets/`
 4. 开始视频生成流程
+
+### Q: 什么时候用 HyperFrames？
+**A**:
+- 产品功能演示、数据可视化、品牌动画
+- 需要精确控制每一帧
+- 需要批量生成变体
+- 内容涉及 UI、界面、文字特效
+
+详细参考：`../skills/video-use/HYPERFRAMES-GUIDE.md`
 
 ---
 
